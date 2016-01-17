@@ -1,9 +1,9 @@
 module OffsitePayments #:nodoc:
   module Integrations #:nodoc:
-    module Realex
+    module RealexOffsite
       mattr_accessor :production_url
       mattr_accessor :test_url
-      self.production_url = 'https://hpp.realexpayments.com/pay'
+      self.production_url = 'https://epage.payandshop.com/epage.cgi'
       self.test_url       = 'https://hpp.sandbox.realexpayments.com/pay'
 
       def self.helper(order, account, options={})
@@ -117,6 +117,8 @@ module OffsitePayments #:nodoc:
           # Realex does not send back CURRENCY param in response
           # however it does echo any other param so we send it twice.
           add_field 'X-CURRENCY', @currency
+          add_field 'X-TEST', @test.to_s
+          add_field 'ORDER_ID', "#{order}#{@timestamp.to_i}"
         end
 
         def form_fields
@@ -153,9 +155,10 @@ module OffsitePayments #:nodoc:
         # Realex Required Fields
         mapping :currency,         'CURRENCY'
 
-        mapping :order,            'ORDER_ID'
+        mapping :order,            'CHECKOUT_ID'
         mapping :amount,           'AMOUNT'
-        mapping :return_url,       'MERCHANT_RESPONSE_URL'
+        mapping :notify_url,       'MERCHANT_RESPONSE_URL'
+        mapping :return_url,       'MERCHANT_RETURN_URL'
 
         # Realex Optional fields
         mapping :customer,         :email => 'CUST_NUM'
@@ -174,6 +177,22 @@ module OffsitePayments #:nodoc:
         end
 
         # Required Notification methods to define
+        def acknowledge(authcode = nil)
+          verified?
+        end
+
+        def item_id
+          checkout_id
+        end
+
+        def transaction_id
+          pasref
+        end
+
+        def test?
+          params['X-TEST']
+        end
+
         def status
           if result == '00'
             'Completed'
@@ -203,6 +222,10 @@ module OffsitePayments #:nodoc:
 
         def merchant_id
           params['MERCHANT_ID']
+        end
+
+        def checkout_id
+          params['CHECKOUT_ID']
         end
 
         def order_id

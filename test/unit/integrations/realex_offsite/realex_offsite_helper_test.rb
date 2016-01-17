@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class RealexHelperTest < Test::Unit::TestCase
+class RealexOffsiteHelperTest < Test::Unit::TestCase
   include OffsitePayments::Integrations
 
   def credentials
@@ -15,7 +15,7 @@ class RealexHelperTest < Test::Unit::TestCase
   end
 
   def setup
-    @helper = Realex::Helper.new('order-500', 'merchant-1234', order_attributes)
+    @helper = RealexOffsite::Helper.new('order-500', 'merchant-1234', order_attributes)
   end
 
   def teardown
@@ -27,7 +27,8 @@ class RealexHelperTest < Test::Unit::TestCase
     assert_field 'ACCOUNT', 'merchant-1234-sub-account'
     assert_field 'CURRENCY', 'GBP'
     assert_field 'AMOUNT', '999'
-    assert_field 'ORDER_ID', 'order-500'
+    assert_field 'CHECKOUT_ID', 'order-500'
+    assert_field 'ORDER_ID', 'order-500' + @helper.fields["TIMESTAMP"]
   end
 
   def test_default_helper_fields
